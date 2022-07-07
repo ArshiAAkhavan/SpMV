@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
   int output[col_size];
   csr_t csr;
 
-  fill_vector(vector, row_size, 0.9f);
+  fill_vector(vector, row_size, 0.2f);
   fill_matrix(matrix, row_size, col_size, 0.5f);
   csr_from_raw(matrix, row_size, col_size, &csr);
 

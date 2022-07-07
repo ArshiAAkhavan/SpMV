@@ -20,19 +20,19 @@ int main(int argc, char **argv) {
   srand(time(NULL));
   if (argc < 3)
     return -1;
-  int n = atoi(argv[1]);
-  int m = atoi(argv[2]);
-  int *matrix[m];
-  int vector[n];
-  int output[m];
-  fill_matrix(matrix, n, m, 0.5f);
-  fill_vector(vector, n, 0.8f);
+  int row_size = atoi(argv[1]);
+  int col_size = atoi(argv[2]);
+  int *matrix[col_size];
+  int vector[row_size];
+  int output[col_size];
+  fill_vector(vector, row_size, 0.2f);
+  fill_matrix(matrix, row_size, col_size, 0.5f);
 
   struct timeval t1, t2;
   double elapsedTime;
 
   gettimeofday(&t1, NULL);
-  dens_mul_serial(matrix, vector, n, m, output);
+  dens_mul_serial(matrix, vector, row_size, col_size, output);
   gettimeofday(&t2, NULL);
 
   elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;    // sec to ms

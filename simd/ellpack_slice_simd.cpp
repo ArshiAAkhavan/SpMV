@@ -152,8 +152,8 @@ int main(int argc, char **argv) {
   vector<vector<input_t>> mat;
   vector<input_t> vec;
   vector<input_t> out;
-  fill_matrix(mat, row_size, col_size, 0.5f);
-  fill_vector(vec, row_size, 0.8f);
+  fill_matrix(mat, row_size, col_size, 0.2f);
+  fill_vector(vec, row_size, 0.5f);
 
   ellpack_t ellpack;
   ellpack_from_raw(mat, row_size, col_size, ellpack);

@@ -40,7 +40,7 @@ def draw_plot(x, y, plot_name):
 
 
 row_size = 1000
-col_sizes = [10000, 30000, 60000, 128000,256000]
+col_sizes = [10000, 30000, 60000, 128000, 150000]
 
 print("drawing dense plot")
 draw_plot(
@@ -50,8 +50,8 @@ draw_plot(
 )
 
 
-print("drawing csr plot")
 for key, result in bench_csr(row_size, col_sizes).items():
+    print(f"drawing csr_{key} plot")
     draw_plot(
         col_sizes,
         result,
@@ -67,6 +67,6 @@ draw_plot(
 
 plt.legend()
 plt.xlabel("number of rows")
-plt.ylabel("time(ms)");
+plt.ylabel("time(ms)")
 plt.title("time/number of rows")
 plt.show()

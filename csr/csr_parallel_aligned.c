@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
   csr_t csr;
   data_t __attribute__((aligned(64))) output[col_size];
 
-  fill_vector(vector, row_size, 0.9f);
+  fill_vector(vector, row_size, 0.2f);
   fill_matrix(matrix, row_size, col_size, 0.5f);
   csr_from_raw(matrix, row_size, col_size, &csr);
 

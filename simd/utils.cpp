@@ -1,10 +1,15 @@
+#include "utils.h"
 #include <random>
 #include <vector>
-#include "utils.h"
 
 #define MOD 5
 using namespace std;
 
+// v.reserve(len);
+// v.assign(len, 0);
+// int nnz = rand() % ((int)(len * (1.0f - chance)));
+// for (int i = 0; i < nnz; i++)
+//   v[rand() % len] = (rand() % MOD);
 void fill_vector(vector<input_t> &v, const int len, float chance) {
   v.reserve(len);
   for (int i = 0; i < len; i++) {
@@ -13,7 +18,8 @@ void fill_vector(vector<input_t> &v, const int len, float chance) {
   }
 }
 
-void fill_matrix(vector<vector<input_t>> &m, const int row_size,const int col_size, float chance) {
+void fill_matrix(vector<vector<input_t>> &m, const int row_size,
+                 const int col_size, float chance) {
   m.reserve(col_size);
   for (int i = 0; i < col_size; i++) {
     vector<input_t> v;
