@@ -2,50 +2,120 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/sysinfo.h>
+#include <sys/time.h>
 #include <time.h>
 
-#ifndef ROW_SIZE
-#define ROW_SIZE 5
-#endif /* !ROW_SIZE */
+// csr data format for storing matrices
+typedef struct CSR {
+  int *cols;
+  size_t *row_ptrs;
+  int *vals;
+  size_t col_size;
+  size_t nnz;
+} csr_t;
 
-#ifndef COL_SIZE
-#define COL_SIZE 3
-#endif /* !COL_SIZE */
+// convert raw matrix to its csr format
+void csr_from_raw(int **matrix, size_t row_size, size_t col_size, csr_t *csr) {
 
-void dens_mul_serial(int **matrix, int *vector, size_t row_size,
-                     size_t col_size, int *output) {
-  memset(output, 0, sizeof(int) * col_size);
-
+  // count nnz values
+  size_t nnz = 0;
   for (size_t i = 0; i < col_size; i++)
     for (size_t j = 0; j < row_size; j++)
-      output[i] += vector[j] * matrix[i][j];
+      nnz += matrix[i][j] != 0;
+
+  printf("nnz is: %ld\n", nnz);
+  // construct CSR
+  csr->cols = malloc(sizeof(int) * nnz);
+  csr->vals = malloc(sizeof(int) * nnz);
+  csr->row_ptrs = malloc(sizeof(size_t) * (col_size + 1));
+  csr->nnz = nnz;
+  csr->col_size = col_size;
+
+  // fill the CSR vectors
+  size_t counter = 0;
+  for (size_t i = 0; i < col_size; i++) {
+    csr->row_ptrs[i] = counter;
+    for (size_t j = 0; j < row_size; j++) {
+      if (matrix[i][j]) {
+        csr->cols[counter] = j;
+        csr->vals[counter] = matrix[i][j];
+        counter++;
+      }
+    }
+  }
+  // last row_ptr is not set in the for
+  csr->row_ptrs[col_size] = counter;
 }
 
-int main() {
+void csr_mul_serial(csr_t *csr, int *vector, int *output) {
+  memset(output, 0, sizeof(int) * csr->col_size);
+
+  for (size_t i = 0; i < csr->col_size; i++) {
+    for (size_t j = csr->row_ptrs[i]; j < csr->row_ptrs[i + 1]; j++) {
+      output[i] += vector[csr->cols[j]] * csr->vals[j];
+    }
+  }
+}
+
+int main(int argc, char **argv) {
   srand(time(NULL));
-  int *matrix[COL_SIZE];
-  int vector[ROW_SIZE];
-  int output[COL_SIZE];
-  fill_matrix(matrix, ROW_SIZE, COL_SIZE, 0.5f);
-  fill_vector(vector, ROW_SIZE, 0.8f);
-  dens_mul_serial(matrix, vector, ROW_SIZE, COL_SIZE, output);
+  if (argc < 3)
+    return -1;
+  int col_size = atoi(argv[1]);
+  int row_size = atoi(argv[2]);
 
-  printf("Matrix is:\n");
-  for (size_t i = 0; i < COL_SIZE; i++, printf("\n"))
-    for (size_t j = 0; j < ROW_SIZE; j++)
-      printf("%d ", matrix[i][j]);
-  printf("\n");
+  int *matrix[col_size];
+  int vector[row_size];
+  int output[col_size];
+  csr_t csr;
 
-  printf("Vector is:\n");
-  for (size_t j = 0; j < ROW_SIZE; j++)
-    printf("%d ", vector[j]);
-  printf("\n");
+  fill_vector(vector, row_size, 0.9f);
+  fill_matrix(matrix, row_size, col_size, 0.5f);
+  csr_from_raw(matrix, row_size, col_size, &csr);
 
-  printf("\n");
-  printf("Output is:\n");
-  for (size_t j = 0; j < COL_SIZE; j++)
-    printf("%d ", output[j]);
-  printf("\n");
+  struct timeval t1, t2;
+  double elapsedTime;
 
+  gettimeofday(&t1, NULL);
+  csr_mul_serial(&csr, vector, output);
+  gettimeofday(&t2, NULL);
+
+  elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;    // sec to ms
+  elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
+  printf("time: %lf\n", elapsedTime);
+
+  // printf("Matrix is:\n");
+  // for (size_t i = 0; i < col_size; i++, printf("\n"))
+  //   for (size_t j = 0; j < row_size; j++)
+  //     printf("%d ", matrix[i][j]);
+  // printf("\n");
+  //
+  // printf("Vector is:\n");
+  // for (size_t j = 0; j < row_size; j++)
+  //   printf("%d ", vector[j]);
+  // printf("\n");
+  //
+  // printf("\n");
+  // printf("csr format is:\n");
+  // printf("r_ptrs:\t");
+  // for (size_t j = 0; j < csr.col_size + 1; j++)
+  //   printf("%ld ", csr.row_ptrs[j]);
+  //
+  // printf("\ncols:\t");
+  // for (size_t j = 0; j < csr.nnz; j++)
+  //   printf("%d ", csr.cols[j]);
+  //
+  // printf("\nvals:\t");
+  // for (size_t j = 0; j < csr.nnz; j++)
+  //   printf("%d ", csr.vals[j]);
+  // printf("\n");
+  //
+  // printf("\n");
+  // printf("Output is:\n");
+  // for (size_t j = 0; j < col_size; j++)
+  //   printf("%d ", output[j]);
+  // printf("\n");
+  //
   return 0;
 }
