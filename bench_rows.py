@@ -7,7 +7,12 @@ def bench_specific(file_name: str, row_size: int, col_sizes: list[int]) -> list[
     results = []
     for col_size in col_sizes:
         cmd = subprocess.Popen(
-            [f"./build/{file_name}", str(row_size), str(col_size)],
+            [
+                f"./build/{file_name}",
+                str(row_size),
+                str(col_size),
+                str(sparsity_factor),
+            ],
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
@@ -40,13 +45,14 @@ def draw_plot(x, y, plot_name):
 
 
 row_size = 1000
+sparsity_factor = 0.5
 col_sizes = [10000, 30000, 60000, 128000, 150000]
 
 print("drawing dense plot")
 draw_plot(
     col_sizes,
     bench_dense(row_size, col_sizes),
-    f"dense(row={row_size})",
+    f"dense(number of cols={row_size})",
 )
 
 
@@ -62,7 +68,7 @@ print("drawing ellpack plot")
 draw_plot(
     col_sizes,
     bench_ellpack(row_size, col_sizes),
-    f"ellpack(row={row_size})",
+    f"ellpack(number of cols={row_size})",
 )
 
 plt.legend()

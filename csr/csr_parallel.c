@@ -62,10 +62,11 @@ void csr_mul_parallel(csr_t *csr, int *vector, int *output) {
 
 int main(int argc, char **argv) {
   srand(time(NULL));
-  if (argc < 3)
+  if (argc < 4)
     return -1;
   int col_size = atoi(argv[1]);
   int row_size = atoi(argv[2]);
+  float zero_chance = atof(argv[3]);
 
   omp_set_num_threads(get_nprocs()); // TODO: set this to 1, 4, 16, and 64
 
@@ -77,8 +78,8 @@ int main(int argc, char **argv) {
   int output[col_size];
   csr_t csr;
 
+  fill_matrix(matrix, row_size, col_size, zero_chance);
   fill_vector(vector, row_size, 0.2f);
-  fill_matrix(matrix, row_size, col_size, 0.5f);
   csr_from_raw(matrix, row_size, col_size, &csr);
 
   struct timeval t1, t2;

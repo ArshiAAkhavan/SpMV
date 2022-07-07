@@ -23,5 +23,10 @@ clean:
 	rm -rf build
 	rm -rf bench
 
-bench: all
-	python3 bench.py
+bench: bench_rows bench_sparsity
+
+bench_rows: all
+	python3 bench_rows.py
+
+bench_sparsity: all
+	python3 bench_sparse.py

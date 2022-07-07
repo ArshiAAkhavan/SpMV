@@ -144,16 +144,17 @@ void ellpack_mul_simd(ellpack_t &ellpack, vector<input_t> &vect,
 
 int main(int argc, char **argv) {
   srand(time(NULL));
-  if (argc < 3)
+  if (argc < 4)
     return -1;
   int col_size = atoi(argv[1]);
   int row_size = atoi(argv[2]);
+  float zero_chance = atof(argv[3]);
 
   vector<vector<input_t>> mat;
   vector<input_t> vec;
   vector<input_t> out;
   fill_matrix(mat, row_size, col_size, 0.2f);
-  fill_vector(vec, row_size, 0.5f);
+  fill_vector(vec, row_size, zero_chance);
 
   ellpack_t ellpack;
   ellpack_from_raw(mat, row_size, col_size, ellpack);
