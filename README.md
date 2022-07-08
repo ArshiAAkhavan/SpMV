@@ -160,14 +160,49 @@ inorder to test the performance of our implementations, we used two separate ben
 
 As shown above, we gain quite a huge performance boost when just switching to _CSR_ format because of the decrease in amount of calculations we have to do.
 
-As expected, using threads also enhances the performance quite noticeably. using poor Also optimizing cache usage used in `csr_aligned_parallel` results in 
+As expected, using threads also enhances the performance quite noticeably. Also optimizing cache usage used in `csr_aligned_parallel` results in 
 lower memory IO and better results.
 
 As for _ELLPACK_ implementation using vector processors, the results is a little bit tricky. Based on the hardware spec one might endup with different results.
 For this particular bench mark, a CPU with `6` cores was used; so the parallelism level in thread based implementations is 6; 
-whereas _ELLPACK_ implementation using _SIMD, the CPU only had support for `avx2` architecture which means our vectors are of length `8`, meaning we have better level of parallelism/concurrency for _SIMD_ implementation than _thread_ implementation.
+whereas _ELLPACK_ implementation using _SIMD_, the CPU had support for `avx2` architecture which means our vectors are of length `8`, 
+meaning we have better level of parallelism/concurrency for _SIMD_ implementation than _thread based_ implementation.
 Changing any of the configurations above would greatly affect the overall performance. 
 For example, using a CPU that has support for `avx512vl` architecture for longer vectors and 
-using its new instructions such as `__mm512_fmadd` and `__mm512_scatter`  would result in better performance. The same can be said for _thread_ implementation since the more core we have, the more threads we can use.
+using its new instructions such as `__mm512_fmadd` and `__mm512_scatter`  would result in better performance. 
+On the other hand, simply using a CPU with more cores, would increase the level of parallelism in our implementation for `csr_parallel` and `csr_aligned_parallel`. 
+
+### Different level of sparsity 
+![bench_rows output](./rsc/bench_rows.png)
+
+As we can see, the sparser the matrix get, the better performance we gain from _CSR_ format since the amount of instruction we execute 
+has direct relation with amount of none zero value our matrix has. If we take a good look at the chart, we could see that when  _sparsity factor_ gets close to one,
+the runtime for serial implementation of _CSR_ gets close to that of parallel implementations indicating that context switch overhead for parallel imlementations 
+is actually the bottleneck resulting the same performance as the serial implementation.
+As for _ELLPACK_ implementation, given the algorithm we used, _sparsity factor_ cease to affect data size and thus, we see no huge shift in runtime for _ELLPACK_ implementation.
+
+## Future works 
+- The _SIMD_ implementation used `_mm256` instruction set provided by `avx2` library. As good as they are, they still lack perfection. 
+Limitations with this library are: 
+* Short vector length (only 256 bit of data)
+* Though has support for instructions such as `_mm256_gather`, there is no support for _scatter_ functions (if you look at the code, scatter was implemented by hand!)
+* No support for _fuse mull add_ which increase performance by doing two instructions in one.
+
+All mentioned problems have been solved in more resent architectures like `avx512vl` that is: 
+* It has support for vectors of length `512`
+* The `_mm_scatter` family of instructions was added.
+* Added support for `_mm_fmadd` which does the _fuse mull add_ operation.
+
+Unfortunately my system wasn't so up to date and i gone with `avx2` library, so you could go with `avx512vl` library should you have a CPU which has support for that.
+
+- All the tests and benchmarks are taken over a relatively small test cases (the largest matrix was of size `256000`*`1000`) and one may argue that the test results 
+are noisy and not reliable. So a step forward would be to use bigger test cases.
+
+- The _random matrix generator_ is so naively implemented and takes huge amount of runtime that isn't even important for us. 
+So even though we only measure the runtime for the _SpMV_ functions,we have to wait for quite a lot for tests to finish (As an example, it takes about 3 seconds 
+for matrix to be generated, as for the _SpMV_ function, it only takes about 250 milliseconds at worst case.)
+
+
+
 
 
