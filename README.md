@@ -34,7 +34,7 @@ where,
 - `nnz` is number of none zero values in our matrix.
 - `vals` is none zero values in our matrix sorted by their row number.
 - `cols` is an array of size `nnz` which each index represent column number of their counter part in `vals` array.
-- `row_ptrs` is an array containing pointers (indices of `cols` array) determining row number of each value. as an 
+- `row_ptrs` is an array containing pointers (indices of `cols` array) indicating row number of each value. as an 
 example, all values between `row_ptrs[row_idx]` and `row_ptrs[row_idx+1]` indices in `vals`, have row number of `row_idx`.
 
 This data structure has huge advantage when used for storing sparse matrices since it doesn't store any zero value and could reduce data size 
@@ -65,25 +65,33 @@ Simply using OpenMP directive, we can assign a thread for each row and thus, boo
   }
 ```
 
-Though fast, there is still room for improvement. If we look at the declaration of output vector we see the following.
+Though fast, there is still room for improvement! 
+
+If we look at the declaration of `output` vector we see the following.
 ```C 
 int output[col_size];
 ```
 In our Implementation, each thread is responsible for doing multiplication of a single row, thus updating its corresponding index
-in `output`
+in `output`. 
 `output` itself, is a 32bit aligned array which means two threads which are responsible for adjacent rows, would probably be modifying 
 data from the same cache line,thus creating _false sharing_ situation.
 
 In order to prevent that from happening, we have to alter `output` such that each member is 64byte aligned
-(cache line is 64byte in `x86` based system). Doing so would allow threads to modify their output without 
-creating _false sharing_ and results to a boost in performance.
+(cache line is 64byte in `x86` based systems). Doing so would allow threads to modify their output without 
+creating _false sharing_ and results a boost in performance.
 
 `csr/csr_aligned_parallel.c` would solve this problem by defining `data_t`, a 64 byte aligned data structure and then defining 
 `output` array as an array of `data_t` elements as oppose to 32bit aligned `int`.
 
+```C 
+typedef struct cache_optimized_int {
+  int __attribute__((aligned(64))) data;
+} data_t;
+```
+
 ### SIMD
 The last attempt was to make use of underlying SIMD hardware instead of threads.
-Unfortunately, our csr data format is not suited for this task since it has lots of indirection and _reduce_ operations aren't 
+Unfortunately, our csr data format is not suited for this task since it has lots of indirection and _reduce_ operations that aren't 
 really a thing for SIMD hardware, specially vector processors.
 
 Using methods recommended in [this article](https://caidao22.github.io/publication/zhang-2018/ICPP_KNL_final.pdf) we implement a data type 
@@ -173,27 +181,27 @@ using its new instructions such as `__mm512_fmadd` and `__mm512_scatter`  would 
 On the other hand, simply using a CPU with more cores, would increase the level of parallelism in our implementation for `csr_parallel` and `csr_aligned_parallel`. 
 
 ### Different level of sparsity 
-![bench_rows output](./rsc/bench_rows.png)
+![bench_rows output](./rsc/bench_sparsity.png)
 
 As we can see, the sparser the matrix get, the better performance we gain from _CSR_ format since the amount of instruction we execute 
 has direct relation with amount of none zero value our matrix has. If we take a good look at the chart, we could see that when  _sparsity factor_ gets close to one,
 the runtime for serial implementation of _CSR_ gets close to that of parallel implementations indicating that context switch overhead for parallel imlementations 
 is actually the bottleneck resulting the same performance as the serial implementation.
-As for _ELLPACK_ implementation, given the algorithm we used, _sparsity factor_ cease to affect data size and thus, we see no huge shift in runtime for _ELLPACK_ implementation.
+As for _ELLPACK_ implementation, given the algorithm we used, _sparsity factor_ cease to affect data size and thus, we see no huge shift in runtime as we pass a critical point.
 
 ## Future works 
 - The _SIMD_ implementation used `_mm256` instruction set provided by `avx2` library. As good as they are, they still lack perfection. 
 Limitations with this library are: 
-* Short vector length (only 256 bit of data)
-* Though has support for instructions such as `_mm256_gather`, there is no support for _scatter_ functions (if you look at the code, scatter was implemented by hand!)
-* No support for _fuse mull add_ which increase performance by doing two instructions in one.
+  * Short vector length (only 256 bit of data)
+  * Though has support for instructions such as `_mm256_gather`, there is no support for _scatter_ functions (if you look at the code, scatter was implemented by hand!)
+  * No support for _fuse mull add_ which increases the performance by doing two instructions in one.
 
-All mentioned problems have been solved in more resent architectures like `avx512vl` that is: 
-* It has support for vectors of length `512`
-* The `_mm_scatter` family of instructions was added.
-* Added support for `_mm_fmadd` which does the _fuse mull add_ operation.
+All mentioned problems have been solved in more resent architectures like `avx512vl`. That is: 
+  * It has support for vectors of length `512`
+  * The `_mm_scatter` family of instructions was added.
+  * Added support for `_mm_fmadd` which does the _fuse mull add_ operation.
 
-Unfortunately my system wasn't so up to date and i gone with `avx2` library, so you could go with `avx512vl` library should you have a CPU which has support for that.
+Unfortunately my system wasn't so up to date and i gone with `avx2` library, so you could go with `avx512vl` library should you have a CPU which has support for it.
 
 - All the tests and benchmarks are taken over a relatively small test cases (the largest matrix was of size `256000`*`1000`) and one may argue that the test results 
 are noisy and not reliable. So a step forward would be to use bigger test cases.
