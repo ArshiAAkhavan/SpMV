@@ -46,7 +46,7 @@ def draw_plot(x, y, plot_name):
 
 row_size = 1000
 sparsity_factor = 0.5
-col_sizes = [10000, 30000, 60000, 128000, 150000]
+col_sizes = [10000, 30000, 60000, 128000, 150000, 256000]
 
 print("drawing dense plot")
 draw_plot(
@@ -74,5 +74,5 @@ draw_plot(
 plt.legend()
 plt.xlabel("number of rows")
 plt.ylabel("time(ms)")
-plt.title("time/number of rows")
+plt.title(f"time/number of rows (sparsity factor ={sparsity_factor})")
 plt.show()
