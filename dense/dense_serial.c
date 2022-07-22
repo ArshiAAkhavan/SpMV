@@ -5,20 +5,19 @@
 #include <sys/time.h>
 #include <time.h>
 
+void mamad() { printf("ali"); }
+
 void dens_mul_serial(int **matrix, int *vector, size_t row_size,
                      size_t col_size, int *output) {
-  {
-    memset(output, 0, sizeof(int) * col_size);
-
-    for (size_t i = 0; i < col_size; i++)
-      for (size_t j = 0; j < row_size; j++)
-        output[i] += vector[j] * matrix[i][j];
-  }
+  memset(output, 0, sizeof(int) * col_size);
+  for (size_t i = 0; i < col_size; i++)
+    for (size_t j = 0; j < row_size; j++)
+      output[i] += vector[j] * matrix[i][j];
 }
 
 int main(int argc, char **argv) {
   srand(time(NULL));
-if (argc < 4)
+  if (argc < 4)
     return -1;
   int col_size = atoi(argv[1]);
   int row_size = atoi(argv[2]);

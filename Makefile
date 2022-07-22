@@ -18,7 +18,8 @@ csr_aligned_parallel:
 
 ellpack_slice_simd:
 	mkdir -p build
-	g++ -mfma -mavx2 simd/utils.cpp simd/ellpack_slice_simd.cpp -O3 -o build/ellpack_slice_simd
+	g++ -mfma -mavx2 simd/utils.cpp simd/ellpack_slice_simd_256.cpp -O3 -o build/ellpack_slice_simd_256
+	g++ -mfma -mavx512vl -mavx512f simd/utils.cpp simd/ellpack_slice_simd_512.cpp -O3 -o build/ellpack_slice_simd_512
 clean:
 	rm -rf build
 	rm -rf bench

@@ -2,9 +2,7 @@ import matplotlib.pyplot as plt
 import subprocess
 import re
 
-
-def bench_specific(file_name: str, row_size: int, col_sizes: list[int]) -> list[float]:
-    results = []
+def bench_specific(file_name: str, row_size: int, col_sizes: list[int]) -> list[float]: results = []
     for col_size in col_sizes:
         cmd = subprocess.Popen(
             [

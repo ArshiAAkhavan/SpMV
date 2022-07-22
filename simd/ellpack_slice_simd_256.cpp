@@ -1,22 +1,17 @@
 #include "utils.h"
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <functional>
 #include <immintrin.h>
 #include <iostream>
 #include <random>
 #include <stdio.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <vector>
 
 using namespace std;
-
-#ifndef ROW_SIZE
-#define ROW_SIZE 9
-#endif /* !ROW_SIZE */
-
-#ifndef COL_SIZE
-#define COL_SIZE 9
-#endif /* !COL_SIZE */
 
 const short AVX512_VLEN = 512;
 const short AVX256_VLEN = 256;
@@ -147,84 +142,72 @@ void ellpack_mul_simd(ellpack_t &ellpack, vector<input_t> &vect,
   }
 }
 
-int main() {
+int main(int argc, char **argv) {
   srand(time(NULL));
+  if (argc < 4)
+    return -1;
+  int col_size = atoi(argv[1]);
+  int row_size = atoi(argv[2]);
+  float zero_chance = atof(argv[3]);
+
   vector<vector<input_t>> mat;
   vector<input_t> vec;
   vector<input_t> out;
-  // fill_matrix(mat, ROW_SIZE, COL_SIZE, 0.5f);
-  // fill_vector(vec, ROW_SIZE, 0.8f);
-  for (addr_t i = 0; i < ROW_SIZE; i++)
-    vec.push_back(1);
-
-  for (addr_t i = 0; i < COL_SIZE; i++) {
-    vector<input_t> v(ROW_SIZE);
-    mat.push_back(v);
-  }
-
-  mat[0][0] = 1;
-  mat[0][3] = 2;
-  mat[1][1] = 3;
-  mat[1][2] = 4;
-  mat[2][6] = 5;
-  mat[3][1] = 6;
-  mat[3][3] = 7;
-  mat[4][1] = 8;
-  mat[4][3] = 9;
-  mat[4][4] = 10;
-  mat[5][0] = 11;
-  mat[5][2] = 12;
-  mat[6][0] = 13;
-  mat[6][5] = 14;
-  mat[7][3] = 15;
-  mat[7][5] = 16;
-  mat[7][7] = 17;
-  // mat[8][7] = 17;
-  // mat[9][7] = 17;
+  fill_matrix(mat, row_size, col_size, 0.2f);
+  fill_vector(vec, row_size, zero_chance);
 
   ellpack_t ellpack;
-  ellpack_from_raw(mat, ROW_SIZE, COL_SIZE, ellpack);
+  ellpack_from_raw(mat, row_size, col_size, ellpack);
 
-  printf("Matrix is:\n");
-  for (auto row : mat) {
-    for (auto cell : row) {
-      cout << cell << " ";
-    }
-    cout << endl;
-  }
-  cout << endl;
+  struct timeval t1, t2;
+  double elapsedTime;
 
-  cout << "Vector is:" << endl;
-  for (auto cell : vec) {
-    cout << cell << " ";
-  }
-  cout << endl;
-
-  cout << "ellpack.vals is:" << endl;
-  for (int i = 0; i < ellpack.cap; i++) {
-    cout << ellpack.vals[i] << " ";
-  }
-  cout << endl;
-
-  cout << "ellpack.cols is:" << endl;
-  for (int i = 0; i < ellpack.cap; i++) {
-    cout << ellpack.cols[i] << " ";
-  }
-  cout << endl;
-
-  cout << "ellpack.pack_ptr is:" << endl;
-  for (auto cell : ellpack.pack_ptr) {
-    cout << cell << " ";
-  }
-  cout << endl;
-
+  gettimeofday(&t1, NULL);
   ellpack_mul_simd(ellpack, vec, out);
-  cout << endl;
-  cout << "Output is:" << endl;
-  for (auto cell : out) {
-    cout << cell << " ";
-  }
-  cout << endl;
+  gettimeofday(&t2, NULL);
+
+  elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;    // sec to ms
+  elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0; // us to ms
+  printf("time: %lf\n", elapsedTime);
+
+  // printf("Matrix is:\n");
+  // for (auto row : mat) {
+  //   for (auto cell : row) {
+  //     cout << cell << " ";
+  //   }
+  //   cout << endl;
+  // }
+  // cout << endl;
+  //
+  // cout << "Vector is:" << endl;
+  // for (auto cell : vec) {
+  //   cout << cell << " ";
+  // }
+  // cout << endl;
+  //
+  // cout << "ellpack.vals is:" << endl;
+  // for (int i = 0; i < ellpack.cap; i++) {
+  //   cout << ellpack.vals[i] << " ";
+  // }
+  // cout << endl;
+  //
+  // cout << "ellpack.cols is:" << endl;
+  // for (int i = 0; i < ellpack.cap; i++) {
+  //   cout << ellpack.cols[i] << " ";
+  // }
+  // cout << endl;
+  //
+  // cout << "ellpack.pack_ptr is:" << endl;
+  // for (auto cell : ellpack.pack_ptr) {
+  //   cout << cell << " ";
+  // }
+  // cout << endl;
+  // cout << endl;
+  // cout << "Output is:" << endl;
+  // for (auto cell : out) {
+  //   cout << cell << " ";
+  // }
+  // cout << endl;
 
   return 0;
 }
